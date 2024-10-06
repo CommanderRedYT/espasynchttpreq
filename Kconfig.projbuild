@@ -36,4 +36,10 @@ config LOG_LOCAL_LEVEL_ASYNC_HTTP
     default 4 if LOG_LOCAL_LEVEL_ASYNC_HTTP_DEBUG
     default 5 if LOG_LOCAL_LEVEL_ASYNC_HTTP_VERBOSE
 
+config ASYNC_HTTP_REQ_INCLUDE_CLIENT_AUTH
+    bool "Include client authentication"
+    default n
+    help
+        Include client authentication in the request.
+
 endmenu

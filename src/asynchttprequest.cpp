@@ -138,10 +138,16 @@ bool AsyncHttpRequest::taskRunning() const
     return false;
 }
 
+#ifdef ASYNC_HTTP_REQ_INCLUDE_CLIENT_AUTH
 std::expected<void, std::string> AsyncHttpRequest::createClient(std::string_view url, esp_http_client_method_t method,
                                                                 int timeout_ms,
                                                                 std::string_view serverCert,
                                                                 const std::optional<cpputils::ClientAuth> &clientAuth)
+#else
+std::expected<void, std::string> AsyncHttpRequest::createClient(std::string_view url, esp_http_client_method_t method,
+                                                                int timeout_ms,
+                                                                std::string_view serverCert)
+#endif
 {
     if (m_client)
     {
@@ -167,6 +173,7 @@ std::expected<void, std::string> AsyncHttpRequest::createClient(std::string_view
         config.cert_len = serverCert.size();
     }
 
+#ifdef ASYNC_HTTP_REQ_INCLUDE_CLIENT_AUTH
     if (clientAuth)
     {
         config.client_key_pem = clientAuth->clientKey.data();
@@ -174,6 +181,7 @@ std::expected<void, std::string> AsyncHttpRequest::createClient(std::string_view
         config.client_cert_pem = clientAuth->clientCert.data();
         config.client_cert_len = clientAuth->clientCert.size();
     }
+#endif
 
     m_client = espcpputils::http_client{&config};
 
@@ -211,12 +219,20 @@ bool AsyncHttpRequest::hasClient() const
     return m_client;
 }
 
+#ifdef ASYNC_HTTP_REQ_INCLUDE_CLIENT_AUTH
 std::expected<void, std::string> AsyncHttpRequest::start(std::string_view url,
                                                          esp_http_client_method_t method,
                                                          const std::map<std::string, std::string> &requestHeaders,
                                                          std::string &&requestBody, int timeout_ms,
                                                          std::string_view serverCert,
                                                          const std::optional<cpputils::ClientAuth> &clientAuth)
+#else
+std::expected<void, std::string> AsyncHttpRequest::start(std::string_view url,
+                                                         esp_http_client_method_t method,
+                                                         const std::map<std::string, std::string> &requestHeaders,
+                                                         std::string &&requestBody, int timeout_ms,
+                                                         std::string_view serverCert)
+#endif
 {
     if (!m_taskHandle)
     {
@@ -237,8 +253,13 @@ std::expected<void, std::string> AsyncHttpRequest::start(std::string_view url,
         m_client = {};
     }
 
+#ifdef ASYNC_HTTP_REQ_INCLUDE_CLIENT_AUTH
     if (auto result = createClient(url, method, timeout_ms, serverCert, clientAuth); !result)
         return std::unexpected(std::move(result).error());
+#else
+    if (auto result = createClient(url, method, timeout_ms, serverCert); !result)
+        return std::unexpected(std::move(result).error());
+#endif
 
     m_requestBody = std::move(requestBody);
     if (!m_requestBody.empty())

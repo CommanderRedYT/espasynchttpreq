@@ -16,7 +16,9 @@
 #include <wrappers/http_client.h>
 #include <wrappers/event_group.h>
 #include <taskutils.h>
+#ifdef ASYNC_HTTP_REQ_INCLUDE_CLIENT_AUTH
 #include <clientauth.h>
+#endif
 
 class AsyncHttpRequest
 {
@@ -28,20 +30,36 @@ public:
     std::expected<void, std::string> endTask();
     bool taskRunning() const;
 
+#ifdef ASYNC_HTTP_REQ_INCLUDE_CLIENT_AUTH
     std::expected<void, std::string> createClient(std::string_view url,
                                                   esp_http_client_method_t method = HTTP_METHOD_GET,
                                                   int timeout_ms = 0,
                                                   std::string_view serverCert = {},
                                                   const std::optional<cpputils::ClientAuth> &clientAuth = {});
+#else
+    std::expected<void, std::string> createClient(std::string_view url,
+                                                  esp_http_client_method_t method = HTTP_METHOD_GET,
+                                                  int timeout_ms = 0,
+                                                  std::string_view serverCert = {});
+#endif
+
     std::expected<void, std::string> deleteClient();
     bool hasClient() const;
 
+#ifdef ASYNC_HTTP_REQ_INCLUDE_CLIENT_AUTH
     std::expected<void, std::string> start(std::string_view url,
                                            esp_http_client_method_t method = HTTP_METHOD_GET,
                                            const std::map<std::string, std::string> &requestHeaders = {},
                                            std::string &&requestBody = {}, int timeout_ms = 0,
                                            std::string_view serverCert = {},
                                            const std::optional<cpputils::ClientAuth> &clientAuth = {});
+#else
+    std::expected<void, std::string> start(std::string_view url,
+                                           esp_http_client_method_t method = HTTP_METHOD_GET,
+                                           const std::map<std::string, std::string> &requestHeaders = {},
+                                           std::string &&requestBody = {}, int timeout_ms = 0,
+                                           std::string_view serverCert = {});
+#endif
     std::expected<void, std::string> retry(std::optional<std::string_view> url = std::nullopt,
                                            std::optional<esp_http_client_method_t> method = std::nullopt,
                                            const std::map<std::string, std::string> &requestHeaders = {},
